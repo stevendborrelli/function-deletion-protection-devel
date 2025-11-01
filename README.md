@@ -1,44 +1,79 @@
-# function-template-go
-[![CI](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml)
+# function-deletion-protection
 
-A template for writing a [composition function][functions] in [Go][go].
+A Crossplane Composition Function that adds deletion protection to resources by creating `ClusterUsage` or `Usage` objects when resources are labeled with `protection.fn.crossplane.io/block-deletion: "true"`.
 
-To learn how to use this template:
+The Usage will block deletion requests 
 
-* [Follow the guide to writing a composition function in Go][function guide]
-* [Learn about how composition functions work][functions]
-* [Read the function-sdk-go package documentation][package docs]
+This function requires Crossplane version 2.0 or higher, which includes the new `protection.crossplane.io` API Group.
 
-If you just want to jump in and get started:
+## Overview
 
-1. Replace `function-template-go` with your function in `go.mod`,
-   `package/crossplane.yaml`, and any Go imports. (You can also do this
-   automatically by running the `./init.sh <function-name>` script.)
-1. Update `input/v1beta1/` to reflect your desired input (and run `go generate ./...`)
-1. Add your logic to `RunFunction` in `fn.go`
-1. Add tests for your logic in `fn_test.go`
-1. Update this file, `README.md`, to be about your function!
+This function monitors resources in a composition for the `protection.fn.crossplane.io/block-deletion` label and creates corresponding ClusterUsage objects to prevent accidental deletion. It can protect:
 
-This template uses [Go][go], [Docker][docker], and the [Crossplane CLI][cli] to
-build functions.
+- Composite resources (XRs) when labeled
+- Composed resources when labeled. If a Composed resources is protected, the parent Composite will also be protected.
 
-```shell
-# Run code generation - see input/generate.go
-$ go generate ./...
+Resources can be labeled outside of the Composition using `kubectl label`. The function will check if either the
+desired or observed state is labeled:
 
-# Run tests - see fn_test.go
-$ go test ./...
-
-# Build the function's runtime image - see Dockerfile
-$ docker build . --tag=runtime
-
-# Build a function package - see package/crossplane.yaml
-$ crossplane xpkg build -f package --embed-runtime-image=runtime
+```yaml
+apiVersion: ec2.aws.upbound.io/v1beta1
+kind: VPC
+metadata:
+  labels:
+    protection.fn.crossplane.io/block-deletion: "true"
+  name: my-vpc
 ```
 
-[functions]: https://docs.crossplane.io/latest/concepts/composition-functions
-[go]: https://go.dev
-[function guide]: https://docs.crossplane.io/knowledge-base/guides/write-a-composition-function-in-go
-[package docs]: https://pkg.go.dev/github.com/crossplane/function-sdk-go
-[docker]: https://www.docker.com
-[cli]: https://docs.crossplane.io/latest/cli
+The function will generate a `ClusterUsage`
+
+```yaml
+apiVersion: protection.crossplane.io/v1beta1
+kind: ClusterUsage
+metadata:
+  name: vpc-my-vpc-fn-protection
+spec:
+  of:
+    apiVersion: ec2.aws.upbound.io/v1beta1
+    kind: VPC
+    resourceRef:
+      name: my-vpc
+  reason: created by function-deletion-protection via label protection.fn.crossplane.io/block-deletion
+
+```
+
+If a resource is Cluster-scoped, a `ClusterUsage` will be generated. If Namespaced a `Usage` will be created in the Resource's namespace.
+
+## Installation
+
+The function can be installed in a Crossplane [Composition Pipeline](https://docs.crossplane.io/latest/composition/compositions/).
+
+The only setting is `cacheTTL`, which configures the alpha Function Response Cache.
+
+```yaml
+    - step: protect-resources
+      functionRef:
+        name: crossplane-contrib-function-protection
+      input:
+        apiVersion: protection.fn.crossplane.io/v1beta1
+        kind: Input
+        cacheTTL: 10m
+```
+
+## Building
+
+To build the Docker image for both arm64 and amd64 and save the results
+in a `tar` file, run:
+
+```shell
+export VERSION=0.1.3
+# Build the function's runtime image
+$ docker buildx build --platform linux/amd64,linux/arm64 . --output type=oci,dest=function-deletion-protection-runtime-v${VERSION}.tar
+```
+
+Next, build the Crossplane Package:
+
+```shell
+export VERSION=0.1.3
+crossplane xpkg build -f package --embed-runtime-image-tarball=function-deletion-protection-runtime-v${VERSION}.tar -o function-deletion-protection-v${VERSION}.xpkg
+```
