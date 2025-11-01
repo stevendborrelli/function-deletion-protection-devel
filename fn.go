@@ -8,6 +8,9 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	protectionv1beta1 "github.com/crossplane/crossplane/v2/apis/protection/v1beta1"
+	v1beta1 "github.com/upboundcare/function-deletion-protection/input/v1beta1"
+	"google.golang.org/protobuf/types/known/durationpb"
+
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/logging"
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
@@ -16,8 +19,6 @@ import (
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/resource/composite"
 	"github.com/crossplane/function-sdk-go/response"
-	v1beta1 "github.com/upboundcare/function-deletion-protection/input/v1beta1"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 type Function struct {
@@ -166,16 +167,16 @@ func GenerateUsage(u *composed.Unstructured) map[string]any {
 
 	if namespace == "" {
 		usageType = protectionv1beta1.ClusterUsageKind
-		resourceRef = map[string]interface{}{
+		resourceRef = map[string]any{
 			"name": u.GetName(),
 		}
 	} else {
-		resourceRef = map[string]interface{}{
+		resourceRef = map[string]any{
 			"name":      u.GetName(),
 			"namespace": u.GetNamespace(),
 		}
 	}
-	usage := map[string]interface{}{
+	usage := map[string]any{
 		"apiVersion": ProtectionGroupVersion,
 		"kind":       usageType,
 		"metadata": map[string]any{
@@ -193,7 +194,7 @@ func GenerateUsage(u *composed.Unstructured) map[string]any {
 	return usage
 }
 
-// GenerateUsage creates a Usage for a desired Composite resource.
+// GenerateXRUsage creates a Usage for a desired Composite resource.
 func GenerateXRUsage(u *composite.Unstructured) map[string]any {
 	usageType := protectionv1beta1.UsageKind
 	var resourceRef map[string]any
@@ -201,16 +202,16 @@ func GenerateXRUsage(u *composite.Unstructured) map[string]any {
 
 	if namespace == "" {
 		usageType = protectionv1beta1.ClusterUsageKind
-		resourceRef = map[string]interface{}{
+		resourceRef = map[string]any{
 			"name": u.GetName(),
 		}
 	} else {
-		resourceRef = map[string]interface{}{
+		resourceRef = map[string]any{
 			"name":      u.GetName(),
 			"namespace": u.GetNamespace(),
 		}
 	}
-	usage := map[string]interface{}{
+	usage := map[string]any{
 		"apiVersion": ProtectionGroupVersion,
 		"kind":       usageType,
 		"metadata": map[string]any{
