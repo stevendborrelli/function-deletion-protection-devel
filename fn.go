@@ -30,7 +30,7 @@ const (
 	ProtectionLabelBlockDeletion = "protection.fn.crossplane.io/block-deletion"
 	ProtectionGroupVersion       = protectionv1beta1.Group + "/" + protectionv1beta1.Version
 	ProtectionReason             = "created by function-deletion-protection via label " + ProtectionLabelBlockDeletion
-	// Suffix applied when generating Usage names
+	// UsageNameSuffix is the suffix applied when generating Usage names.
 	UsageNameSuffix = "fn-protection"
 )
 
