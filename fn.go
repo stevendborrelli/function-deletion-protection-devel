@@ -28,9 +28,10 @@ type Function struct {
 
 const (
 	ProtectionLabelBlockDeletion = "protection.fn.crossplane.io/block-deletion"
-	ProtectionLabelEnabled       = "protection.fn.crossplane.io/enabled"
-	ProtectionGroupVersion       = protectionv1beta1.Group + "/" + protectionv1beta1.Version
-	ProtectionReason             = "created by function-deletion-protection via label " + ProtectionLabelBlockDeletion
+	// // ProtectionLabelEnabled Currently not implemented
+	// ProtectionLabelEnabled = "protection.fn.crossplane.io/enabled"
+	ProtectionGroupVersion = protectionv1beta1.Group + "/" + protectionv1beta1.Version
+	ProtectionReason       = "created by function-deletion-protection via label " + ProtectionLabelBlockDeletion
 )
 
 // RunFunction runs the Function.
@@ -89,10 +90,9 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 					response.Fatal(rsp, errors.Wrap(err, "cannot convert usage to unstructured"))
 					return rsp, nil
 				}
-				uname := resource.Name(strings.ToLower(observed.Resource.GetKind() + "-" + observed.Resource.GetName() + "-protection"))
-				f.log.Debug("creating usage", "usage", uname, "kind", usageComposed.GetKind())
+				f.log.Debug("creating usage", "kind", usageComposed.GetKind(), "name", usageComposed.GetName(), "namespace", usageComposed.GetNamespace())
 				protectedCount++
-				desiredComposed[uname] = &resource.DesiredComposed{Resource: usageComposed}
+				desiredComposed[resource.Name(name+"-usage")] = &resource.DesiredComposed{Resource: usageComposed}
 			}
 		}
 	}
@@ -108,8 +108,10 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			response.Fatal(rsp, errors.Wrap(err, "cannot convert usage to unstructured"))
 			return rsp, nil
 		}
-		uname := resource.Name(strings.ToLower(observedComposite.Resource.GetKind() + "-" + observedComposite.Resource.GetName() + "-xr-protection"))
-		desiredComposed[uname] = &resource.DesiredComposed{Resource: usageComposed}
+		uname := strings.ToLower("xr-" + observedComposite.Resource.GetName() + "-usage")
+		desiredComposed[resource.Name(uname)] = &resource.DesiredComposed{Resource: usageComposed}
+		f.log.Debug("creating usage", "kind", usageComposed.GetKind(), "name", usageComposed.GetName(), "namespace", usageComposed.GetNamespace())
+
 	}
 
 	// requiredResources, err := request.GetRequiredResources(req)

@@ -72,7 +72,7 @@ func TestRunFunction(t *testing.T) {
 			},
 		},
 		"CacheTTLInvalid": {
-			reason: "The Function should return an error if the duration is invalid",
+			reason: "The Function should return an error if the CacheTTL duration is invalid",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: "hello"},
@@ -258,7 +258,7 @@ func TestRunFunction(t *testing.T) {
 									}
 								}`),
 							},
-							"testxr-my-test-xr-xr-protection": {
+							"xr-my-test-xr-usage": {
 								Resource: resource.MustStructJSON(`{
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
@@ -399,7 +399,7 @@ func TestRunFunction(t *testing.T) {
 									}
 								}`),
 							},
-							"testxr-my-test-xr-xr-protection": {
+							"xr-my-test-xr-usage": {
 								Resource: resource.MustStructJSON(`{
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
@@ -418,7 +418,7 @@ func TestRunFunction(t *testing.T) {
 									}
 								}`),
 							},
-							"testcomposed-my-test-composed-protection": {
+							"ready-composed-resource-usage": {
 								Resource: resource.MustStructJSON(`{
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
