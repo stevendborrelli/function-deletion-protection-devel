@@ -28,10 +28,10 @@ type Function struct {
 
 const (
 	ProtectionLabelBlockDeletion = "protection.fn.crossplane.io/block-deletion"
-	// // ProtectionLabelEnabled Currently not implemented
-	// ProtectionLabelEnabled = "protection.fn.crossplane.io/enabled"
-	ProtectionGroupVersion = protectionv1beta1.Group + "/" + protectionv1beta1.Version
-	ProtectionReason       = "created by function-deletion-protection via label " + ProtectionLabelBlockDeletion
+	ProtectionGroupVersion       = protectionv1beta1.Group + "/" + protectionv1beta1.Version
+	ProtectionReason             = "created by function-deletion-protection via label " + ProtectionLabelBlockDeletion
+	// Suffix applied when generating Usage names
+	UsageNameSuffix = "fn-protection"
 )
 
 // RunFunction runs the Function.
@@ -92,7 +92,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				}
 				f.log.Debug("creating usage", "kind", usageComposed.GetKind(), "name", usageComposed.GetName(), "namespace", usageComposed.GetNamespace())
 				protectedCount++
-				desiredComposed[resource.Name(name+"-usage")] = &resource.DesiredComposed{Resource: usageComposed}
+				desiredComposed[name+"-usage"] = &resource.DesiredComposed{Resource: usageComposed}
 			}
 		}
 	}
@@ -111,7 +111,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		uname := strings.ToLower("xr-" + observedComposite.Resource.GetName() + "-usage")
 		desiredComposed[resource.Name(uname)] = &resource.DesiredComposed{Resource: usageComposed}
 		f.log.Debug("creating usage", "kind", usageComposed.GetKind(), "name", usageComposed.GetName(), "namespace", usageComposed.GetNamespace())
-
 	}
 
 	// requiredResources, err := request.GetRequiredResources(req)
@@ -144,32 +143,28 @@ func ProtectResource(u *unstructured.Unstructured) bool {
 
 // GenerateUsage creates a Usage for a desired Composed resource.
 func GenerateUsage(u *unstructured.Unstructured) map[string]any {
-	usageType := protectionv1beta1.UsageKind
-	var resourceRef map[string]any
-	namespace := u.GetNamespace()
-
-	if namespace == "" {
-		usageType = protectionv1beta1.ClusterUsageKind
-		resourceRef = map[string]any{
-			"name": u.GetName(),
-		}
-	} else {
-		resourceRef = map[string]any{
-			"name":      u.GetName(),
-			"namespace": u.GetNamespace(),
-		}
+	usageType := protectionv1beta1.ClusterUsageKind
+	usageMeta := map[string]any{
+		"name": GenerateName(u.GetName(), UsageNameSuffix),
 	}
+
+	namespace := u.GetNamespace()
+	if namespace != "" {
+		usageType = protectionv1beta1.UsageKind
+		usageMeta["namespace"] = namespace
+	}
+
 	usage := map[string]any{
 		"apiVersion": ProtectionGroupVersion,
 		"kind":       usageType,
-		"metadata": map[string]any{
-			"name": u.GetName() + "-fn-protection",
-		},
+		"metadata":   usageMeta,
 		"spec": map[string]any{
 			"of": map[string]any{
-				"apiVersion":  u.GetAPIVersion(),
-				"kind":        u.GetKind(),
-				"resourceRef": resourceRef,
+				"apiVersion": u.GetAPIVersion(),
+				"kind":       u.GetKind(),
+				"resourceRef": map[string]any{
+					"name": u.GetName(),
+				},
 			},
 			"reason": ProtectionReason,
 		},
