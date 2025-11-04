@@ -1,15 +1,17 @@
 # function-deletion-protection
 
-A Crossplane Composition Function that adds blocks deletion of resources by creating `ClusterUsage` or `Usage` objects when resources are labeled with `protection.fn.crossplane.io/block-deletion: "true"`.
+`function-deletion-protection` is Crossplane Composition Function that blocks deletion of resources by creating `ClusterUsage` or `Usage` objects when resources are labeled with `protection.fn.crossplane.io/block-deletion: "true"`.
 
-The Usage will block deletion requests. See [Usages](https://docs.crossplane.io/latest/managed-resources/usages/) for more information.
+When a Crossplane `Usage` is created for an Object, Crossplane creates a webhook that blocks any deletion
+requests until the `Usage` has been removed from the Cluster. See [Usages](https://docs.crossplane.io/latest/managed-resources/usages/) for more information.
 
-By default v2 Usages are created using the `protection.crossplane.io` API Group in Crossplane version 2.0 or higher. The function has the ability to generate v1 Usages by setting `enableV1Mode: true` in the
+By this function creates v2 `Usages` using the `protection.crossplane.io` API Group in Crossplane version
+2.0 or higher. The function has the ability to generate v1 Usages by setting `enableV1Mode: true` in the
 function `Input`.
 
 ## Overview
 
-This function monitors resources in a composition for the `protection.fn.crossplane.io/block-deletion` label and creates corresponding ClusterUsage objects to prevent accidental deletion. It can protect:
+This function monitors resources in a composition for the `protection.fn.crossplane.io/block-deletion` label and creates corresponding `ClusterUsage` objects to prevent accidental deletion. It can protect:
 
 - Composite resources (XRs) when labeled
 - Composed resources when labeled. If a Composed resources is protected, the parent Composite will also be protected.
@@ -26,7 +28,8 @@ metadata:
   name: my-vpc
 ```
 
-The function will generate a `ClusterUsage`
+The function monitors the Composite and all Composed resources. In this case since the label
+is applied to a Cluster-scoped resource it will generate a `ClusterUsage`:
 
 ```yaml
 apiVersion: protection.crossplane.io/v1beta1
@@ -42,7 +45,7 @@ spec:
   reason: created by function-deletion-protection via label protection.fn.crossplane.io/block-deletion
 ```
 
-If a resource is Cluster-scoped, a `ClusterUsage` will be generated. If Namespaced a `Usage` will be created in the Resource's namespace.
+If the resources is Namespaced a `Usage` will be created in the Resource's namespace.
 
 The label can be applied to the resource in the Composition (the "Desired" state), or it can be applied to the
 Resource in the cluster (the "Observed" state). If the Desired and Observed labels conflict, the function will
@@ -82,7 +85,8 @@ this feature will be removed when upstream Crossplane deprecates v1 APIs.
         enableV1Mode: true
 ```
 
-Will generate a v1 Cluster-scoped `Usage` using the `apiextensions.crossplane.io/v1beta1` API Group:
+When this feature is enabled, the function will generate v1 Cluster-scoped `Usages` using the
+`apiextensions.crossplane.io/v1beta1` API Group:
 
 ```yaml
 apiVersion: apiextensions.crossplane.io/v1beta1
