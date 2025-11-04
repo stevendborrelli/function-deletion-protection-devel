@@ -1,11 +1,11 @@
 # function-deletion-protection
 
-`function-deletion-protection` is Crossplane Composition Function that blocks deletion of resources by creating `ClusterUsage` or `Usage` objects when resources are labeled with `protection.fn.crossplane.io/block-deletion: "true"`.
+`function-deletion-protection` is a Crossplane Composition Function that blocks deletion of resources by creating `ClusterUsage` or `Usage` objects when resources are labeled with `protection.fn.crossplane.io/block-deletion: "true"`.
 
 When a Crossplane `Usage` is created for an Object, Crossplane creates a webhook that blocks any deletion
 requests until the `Usage` has been removed from the Cluster. See [Usages](https://docs.crossplane.io/latest/managed-resources/usages/) for more information.
 
-By this function creates v2 `Usages` using the `protection.crossplane.io` API Group in Crossplane version
+This function creates v2 `Usages` using the `protection.crossplane.io` API Group in Crossplane version
 2.0 or higher. The function has the ability to generate v1 Usages by setting `enableV1Mode: true` in the
 function `Input`.
 
@@ -57,7 +57,7 @@ The function can be installed in a Crossplane [Composition Pipeline](https://doc
 
 ### Function Customization
 
-Setting `cacheTTL`, configures the [Function Response Cache](https://docs.crossplane.io/latest/operations/operation/#function-response-cache). This can reduce the number of times the function is called.
+Setting `cacheTTL` configures the [Function Response Cache](https://docs.crossplane.io/latest/operations/operation/#function-response-cache). This can reduce the number of times the function is called.
 
 ```yaml
     - step: protect-resources
