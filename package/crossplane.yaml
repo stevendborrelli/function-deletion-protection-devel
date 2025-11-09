@@ -8,4 +8,7 @@ metadata:
     meta.crossplane.io/source: https://github.com/stevendborrelli/function-deletion-protection
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: A function that prevents deletion by creating Usages
-spec: {}
+spec:
+  capabilities:
+    - composition
+    - operation

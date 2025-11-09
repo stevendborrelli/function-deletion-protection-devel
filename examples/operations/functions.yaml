@@ -1,0 +1,12 @@
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: crossplane-contrib-function-deletion-protection
+  #annotations:
+    # This tells crossplane render to connect to the function locally.
+    # Comment this out if updating the function's Go code.
+    #render.crossplane.io/runtime: Development
+spec:
+  # This is ignored when using the Development runtime.
+  package: index.docker.io/steve/function-deletion-protection:v0.2.0-test2

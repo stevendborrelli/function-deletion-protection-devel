@@ -8,7 +8,7 @@ vars:
   # XPKG_REPO: xpkg.upbound.io/crossplane-contrib/{{.FN_NAME}}
   # VERSION: 0.1.3
   XPKG_REPO: index.docker.io/steve/{{.FN_NAME}}
-  VERSION: 0.1.0
+  VERSION: 0.2.0-rc.1
 
 tasks:
   clean:
@@ -36,4 +36,4 @@ tasks:
     desc: Pushes Crossplane package to an OCI repository. Please ensure the repository exists before pushing.
     cmds:
       - for: [amd64, arm64]
-        cmd: up xpkg push  {{.XPKG_REPO}}:v{{.VERSION}} -f {{.FN_NAME}}-{{.ITEM}}-v{{.VERSION}}.xpkg
+        cmd: crossplane xpkg push  {{.XPKG_REPO}}:v{{.VERSION}} -f {{.FN_NAME}}-{{.ITEM}}-v{{.VERSION}}.xpkg

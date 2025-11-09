@@ -335,7 +335,7 @@ spec:
         apiVersion: protection.fn.crossplane.io/v1beta1
         kind: Input
         cacheTTL: 5m
-        enableV1Mode: true
+        enableV1Mode: false
     - functionRef:
         name: crossplane-contrib-function-auto-ready
       step: crossplane-contrib-function-auto-ready

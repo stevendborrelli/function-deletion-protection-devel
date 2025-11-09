@@ -9,10 +9,12 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/crossplane/function-sdk-go/logging"
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
+	"github.com/crossplane/function-sdk-go/resource/composed"
 )
 
 func TestRunFunction(t *testing.T) {
@@ -263,7 +265,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
 									"metadata": {
-										"name": "my-test-xr-cf831c-fn-protection"
+										"name": "testxr-my-test-xr-23c942-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -406,7 +408,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "Usage",
 									"metadata": {
-										"name": "my-test-xr-cf831c-fn-protection",
+										"name": "testxr-my-test-xr-23c942-fn-protection",
 										"namespace": "test"
 									},
 									"spec": {
@@ -545,7 +547,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
 									"metadata": {
-										"name": "my-test-xr-cf831c-fn-protection"
+										"name": "testxr-my-test-xr-23c942-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -555,7 +557,7 @@ func TestRunFunction(t *testing.T) {
 												"name": "my-test-xr"
 											}
 										},
-										"reason": "created by function-deletion-protection via label protection.fn.crossplane.io/block-deletion"
+										"reason": "created by function-deletion-protection by a protected child resource"
 									}
 								}`),
 							},
@@ -564,7 +566,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
 									"metadata": {
-										"name": "my-test-composed-d9bc46-fn-protection"
+										"name": "testcomposed-my-test-composed-601ab8-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -699,7 +701,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
 									"metadata": {
-										"name": "my-test-xr-cf831c-fn-protection"
+										"name": "testxr-my-test-xr-23c942-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -709,7 +711,7 @@ func TestRunFunction(t *testing.T) {
 												"name": "my-test-xr"
 											}
 										},
-										"reason": "created by function-deletion-protection via label protection.fn.crossplane.io/block-deletion"
+										"reason": "created by function-deletion-protection by a protected child resource"
 									}
 								}`),
 							},
@@ -718,7 +720,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "ClusterUsage",
 									"metadata": {
-										"name": "my-test-composed-d9bc46-fn-protection"
+										"name": "testcomposed-my-test-composed-601ab8-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -862,7 +864,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "Usage",
 									"metadata": {
-										"name": "my-test-xr-cf831c-fn-protection",
+										"name": "testxr-my-test-xr-23c942-fn-protection",
 										"namespace": "test"
 									},
 									"spec": {
@@ -873,7 +875,7 @@ func TestRunFunction(t *testing.T) {
 												"name": "my-test-xr"
 											}
 										},
-										"reason": "created by function-deletion-protection via label protection.fn.crossplane.io/block-deletion"
+										"reason": "created by function-deletion-protection by a protected child resource"
 									}
 								}`),
 							},
@@ -882,7 +884,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "protection.crossplane.io/v1beta1",
 									"kind": "Usage",
 									"metadata": {
-										"name": "my-test-composed-d9bc46-fn-protection",
+										"name": "testcomposed-my-test-composed-601ab8-fn-protection",
 										"namespace": "test"
 									},
 									"spec": {
@@ -1021,7 +1023,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "apiextensions.crossplane.io/v1beta1",
 									"kind": "Usage",
 									"metadata": {
-										"name": "my-test-xr-cf831c-fn-protection"
+										"name": "testxr-my-test-xr-23c942-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -1159,7 +1161,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "apiextensions.crossplane.io/v1beta1",
 									"kind": "Usage",
 									"metadata": {
-										"name": "my-test-composed-d9bc46-fn-protection"
+										"name": "testcomposed-my-test-composed-601ab8-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -1178,7 +1180,7 @@ func TestRunFunction(t *testing.T) {
 									"apiVersion": "apiextensions.crossplane.io/v1beta1",
 									"kind": "Usage",
 									"metadata": {
-										"name": "my-test-xr-cf831c-fn-protection"
+										"name": "testxr-my-test-xr-23c942-fn-protection"
 									},
 									"spec": {
 										"of": {
@@ -1188,7 +1190,7 @@ func TestRunFunction(t *testing.T) {
 												"name": "my-test-xr"
 											}
 										},
-										"reason": "created by function-deletion-protection via label protection.fn.crossplane.io/block-deletion"
+										"reason": "created by function-deletion-protection by a protected child resource"
 									}
 								}`),
 							},
@@ -1213,6 +1215,341 @@ func TestRunFunction(t *testing.T) {
 
 			if diff := cmp.Diff(tc.want.err, err, cmpopts.EquateErrors()); diff != "" {
 				t.Errorf("%s\nf.RunFunction(...): -want err, +got err:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestProtectRequiredResources(t *testing.T) {
+	type args struct {
+		rr map[string][]resource.Required
+	}
+	type want struct {
+		dc  map[resource.Name]*resource.DesiredComposed
+		err error
+	}
+
+	cases := map[string]struct {
+		reason string
+		args   args
+		want   want
+	}{
+		"EmptyRequiredResources": {
+			reason: "Should return empty map when no required resources are provided",
+			args: args{
+				rr: map[string][]resource.Required{},
+			},
+			want: want{
+				dc:  map[resource.Name]*resource.DesiredComposed{},
+				err: nil,
+			},
+		},
+		"WatchedResourceWithoutLabel": {
+			reason: "Should create Usage for watched resources regardless of label",
+			args: args{
+				rr: map[string][]resource.Required{
+					RequirementsNameWatchedResource: {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name": "test-watched-resource",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				dc: map[resource.Name]*resource.DesiredComposed{
+					"TestResource-test-watched-resource--required-resource-fn-protection": {
+						Resource: &composed.Unstructured{
+							Unstructured: unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": ProtectionGroupVersion,
+									"kind":       "ClusterUsage",
+									"metadata": map[string]any{
+										"name": "testresource-test-watched-resource-4eae99-fn-protection",
+									},
+									"spec": map[string]any{
+										"of": map[string]any{
+											"apiVersion": "test.crossplane.io/v1",
+											"kind":       "TestResource",
+											"resourceRef": map[string]any{
+												"name": "test-watched-resource",
+											},
+										},
+										"reason": ProtectionReasonWatchOperation,
+									},
+								},
+							},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		"RequiredResourceWithLabel": {
+			reason: "Should create Usage for labeled required resources",
+			args: args{
+				rr: map[string][]resource.Required{
+					"some-requirement": {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name": "test-labeled-resource",
+										"labels": map[string]any{
+											ProtectionLabelBlockDeletion: "true",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				dc: map[resource.Name]*resource.DesiredComposed{
+					"TestResource-test-labeled-resource--required-resource-fn-protection": {
+						Resource: &composed.Unstructured{
+							Unstructured: unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": ProtectionGroupVersion,
+									"kind":       "ClusterUsage",
+									"metadata": map[string]any{
+										"name": "testresource-test-labeled-resource-5584e4-fn-protection",
+									},
+									"spec": map[string]any{
+										"of": map[string]any{
+											"apiVersion": "test.crossplane.io/v1",
+											"kind":       "TestResource",
+											"resourceRef": map[string]any{
+												"name": "test-labeled-resource",
+											},
+										},
+										"reason": ProtectionReasonOperation,
+									},
+								},
+							},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		"RequiredResourceWithoutLabel": {
+			reason: "Should not create Usage for unlabeled non-watched required resources",
+			args: args{
+				rr: map[string][]resource.Required{
+					"some-requirement": {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name": "test-unlabeled-resource",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				dc:  map[resource.Name]*resource.DesiredComposed{},
+				err: nil,
+			},
+		},
+		"NamespacedWatchedResource": {
+			reason: "Should create namespaced Usage for namespaced watched resources",
+			args: args{
+				rr: map[string][]resource.Required{
+					RequirementsNameWatchedResource: {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name":      "test-watched-resource",
+										"namespace": "test-namespace",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				dc: map[resource.Name]*resource.DesiredComposed{
+					"TestResource-test-watched-resource-test-namespace-required-resource-fn-protection": {
+						Resource: &composed.Unstructured{
+							Unstructured: unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": ProtectionGroupVersion,
+									"kind":       "Usage",
+									"metadata": map[string]any{
+										"name":      "testresource-test-watched-resource-4eae99-fn-protection",
+										"namespace": "test-namespace",
+									},
+									"spec": map[string]any{
+										"of": map[string]any{
+											"apiVersion": "test.crossplane.io/v1",
+											"kind":       "TestResource",
+											"resourceRef": map[string]any{
+												"name": "test-watched-resource",
+											},
+										},
+										"reason": ProtectionReasonWatchOperation,
+									},
+								},
+							},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		"MultipleRequiredResources": {
+			reason: "Should create Usages for multiple required resources",
+			args: args{
+				rr: map[string][]resource.Required{
+					RequirementsNameWatchedResource: {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name": "watched-resource-1",
+									},
+								},
+							},
+						},
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name": "watched-resource-2",
+									},
+								},
+							},
+						},
+					},
+					"other-requirement": {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name": "labeled-resource",
+										"labels": map[string]any{
+											ProtectionLabelBlockDeletion: "true",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				dc: map[resource.Name]*resource.DesiredComposed{
+					"TestResource-watched-resource-1--required-resource-fn-protection": {
+						Resource: &composed.Unstructured{
+							Unstructured: unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": ProtectionGroupVersion,
+									"kind":       "ClusterUsage",
+									"metadata": map[string]any{
+										"name": "testresource-watched-resource-1-35e01a-fn-protection",
+									},
+									"spec": map[string]any{
+										"of": map[string]any{
+											"apiVersion": "test.crossplane.io/v1",
+											"kind":       "TestResource",
+											"resourceRef": map[string]any{
+												"name": "watched-resource-1",
+											},
+										},
+										"reason": ProtectionReasonWatchOperation,
+									},
+								},
+							},
+						},
+					},
+					"TestResource-watched-resource-2--required-resource-fn-protection": {
+						Resource: &composed.Unstructured{
+							Unstructured: unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": ProtectionGroupVersion,
+									"kind":       "ClusterUsage",
+									"metadata": map[string]any{
+										"name": "testresource-watched-resource-2-7b3544-fn-protection",
+									},
+									"spec": map[string]any{
+										"of": map[string]any{
+											"apiVersion": "test.crossplane.io/v1",
+											"kind":       "TestResource",
+											"resourceRef": map[string]any{
+												"name": "watched-resource-2",
+											},
+										},
+										"reason": ProtectionReasonWatchOperation,
+									},
+								},
+							},
+						},
+					},
+					"TestResource-labeled-resource--required-resource-fn-protection": {
+						Resource: &composed.Unstructured{
+							Unstructured: unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": ProtectionGroupVersion,
+									"kind":       "ClusterUsage",
+									"metadata": map[string]any{
+										"name": "testresource-labeled-resource-5d2a02-fn-protection",
+									},
+									"spec": map[string]any{
+										"of": map[string]any{
+											"apiVersion": "test.crossplane.io/v1",
+											"kind":       "TestResource",
+											"resourceRef": map[string]any{
+												"name": "labeled-resource",
+											},
+										},
+										"reason": ProtectionReasonOperation,
+									},
+								},
+							},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			dc, err := ProtectRequiredResources(tc.args.rr)
+
+			if diff := cmp.Diff(tc.want.dc, dc); diff != "" {
+				t.Errorf("%s\nProtectRequiredResources(...): -want dc, +got dc:\n%s", tc.reason, diff)
+			}
+
+			if diff := cmp.Diff(tc.want.err, err, cmpopts.EquateErrors()); diff != "" {
+				t.Errorf("%s\nProtectRequiredResources(...): -want err, +got err:\n%s", tc.reason, diff)
 			}
 		})
 	}

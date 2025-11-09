@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: "2025-11-06T16:05:16Z"
+  labels:
+    kubernetes.io/metadata.name: kube-system
+    protection.fn.crossplane.io/block-deletion: "true"
+  name: kube-system
+  resourceVersion: "10"
+  uid: a462abba-ba77-44cb-9607-1e07801bb69e
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active

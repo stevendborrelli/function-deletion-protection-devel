@@ -1,0 +1,23 @@
+---
+apiVersion: ops.crossplane.io/v1alpha1
+kind: WatchOperation
+metadata:
+  name: block-namespace-deletion
+spec:
+  watch:
+    apiVersion: v1
+    kind: Namespace
+    matchLabels:
+      block-deletion: "true"
+  operationTemplate:
+    spec:
+      mode: Pipeline
+      pipeline:
+        - step: block-deletion
+          functionRef:
+            name: crossplane-contrib-function-deletion-protection
+          input:
+            apiVersion: protection.fn.crossplane.io/v1beta1
+            kind: Input
+            cacheTTL: 1h
+            enableV1Mode: false

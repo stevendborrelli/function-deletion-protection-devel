@@ -1,0 +1,29 @@
+apiVersion: ops.crossplane.io/v1alpha1
+kind: Operation
+metadata:
+  name: block-namespace-deletion
+spec:
+  mode: Pipeline
+  pipeline:
+    - step: block-deletion
+      functionRef:
+        name: crossplane-contrib-function-deletion-protection
+      input:
+        apiVersion: protection.fn.crossplane.io/v1beta1
+        kind: Input
+        cacheTTL: 1h
+        enableV1Mode: false
+      requirements:
+        requiredResources:
+          - requirementName: ops.crossplane.io/watched-resource
+            apiVersion: v1
+            kind: Namespace
+            name: crossplane-system
+          - requirementName: kube-system
+            apiVersion: v1
+            kind: Namespace
+            name: kube-system
+          - requirementName: default
+            apiVersion: v1
+            kind: Namespace
+            name: default

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -28,12 +30,18 @@ type Function struct {
 }
 
 const (
-	ProtectionLabelBlockDeletion = "protection.fn.crossplane.io/block-deletion"
-	ProtectionGroupVersion       = protectionv1beta1.Group + "/" + protectionv1beta1.Version
-	ProtectionReason             = "created by function-deletion-protection via label " + ProtectionLabelBlockDeletion
-	ProtectionV1GroupVersion     = apiextensionsv1beta1.Group + "/" + apiextensionsv1beta1.Version
+	ProtectionLabelBlockDeletion           = "protection.fn.crossplane.io/block-deletion"
+	ProtectionGroupVersion                 = protectionv1beta1.Group + "/" + protectionv1beta1.Version
+	ProtectionReason                       = "created by function-deletion-protection "
+	ProtectionReasonLabel                  = ProtectionReason + "via label " + ProtectionLabelBlockDeletion
+	ProtectionReasonCompositeChildResource = ProtectionReason + "because a composed resource is protected"
+	ProtectionReasonOperation              = ProtectionReason + "by an Operation"
+	ProtectionReasonWatchOperation         = ProtectionReason + "by a WatchOperation"
+	ProtectionV1GroupVersion               = apiextensionsv1beta1.Group + "/" + apiextensionsv1beta1.Version
 	// UsageNameSuffix is the suffix applied when generating Usage names.
 	UsageNameSuffix = "fn-protection"
+	// RequirementsNameWatchedResource
+	RequirementsNameWatchedResource = "ops.crossplane.io/watched-resource"
 )
 
 // RunFunction runs the Function.
@@ -86,13 +94,13 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			// The label can either be defined in the pipeline or applied outside of Crossplane
 			if ProtectResource(&desired.Resource.DeepCopy().Unstructured) || ProtectResource(&observed.Resource.DeepCopy().Unstructured) {
 				f.log.Debug("protecting Composed resource", "kind", observed.Resource.GetKind(), "name", observed.Resource.GetName(), "namespace", observed.Resource.GetNamespace())
-				usage := GenerateUsage(&observed.Resource.Unstructured, in.EnableV1Mode)
+				usage := GenerateUsage(&observed.Resource.Unstructured, ProtectionReasonLabel, in.EnableV1Mode)
 				usageComposed := composed.New()
 				if err := convertViaJSON(usageComposed, usage); err != nil {
 					response.Fatal(rsp, errors.Wrap(err, "cannot convert usage to unstructured"))
 					return rsp, nil
 				}
-				f.log.Debug("creating usage", "kind", usageComposed.GetKind(), "name", usageComposed.GetName(), "namespace", usageComposed.GetNamespace())
+				f.log.Debug("created usage", "kind", usageComposed.GetKind(), "name", usageComposed.GetName(), "namespace", usageComposed.GetNamespace())
 				protectedCount++
 				desiredComposed[name+"-usage"] = &resource.DesiredComposed{Resource: usageComposed}
 			}
@@ -104,7 +112,13 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	// - If the Composite has the label
 	if ProtectResource(&observedComposite.Resource.DeepCopy().Unstructured) || ProtectResource(&desiredComposite.Resource.DeepCopy().Unstructured) || protectedCount > 0 {
 		f.log.Debug("protecting composite", "kind", observedComposite.Resource.GetKind(), "name", observedComposite.Resource.GetName(), "namespace", observedComposite.Resource.GetNamespace())
-		usage := GenerateUsage(&observedComposite.Resource.DeepCopy().Unstructured, in.EnableV1Mode)
+		var reason string
+		if protectedCount > 0 {
+			reason = ProtectionReasonCompositeChildResource
+		} else {
+			reason = ProtectionReasonLabel
+		}
+		usage := GenerateUsage(&observedComposite.Resource.DeepCopy().Unstructured, reason, in.EnableV1Mode)
 		usageComposed := composed.New()
 		if err := convertViaJSON(usageComposed, usage); err != nil {
 			response.Fatal(rsp, errors.Wrap(err, "cannot convert usage to unstructured"))
@@ -116,11 +130,23 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		f.log.Debug("creating usage", "kind", usageComposed.GetKind(), "name", usageComposed.GetName(), "namespace", usageComposed.GetNamespace())
 	}
 
-	// requiredResources, err := request.GetRequiredResources(req)
-	// if err != nil {
-	// 	response.Fatal(rsp, errors.Wrap(err, "cannot get required resources"))
-	// 	return rsp, nil
-	// }
+	// Protect any required resources that are present.
+	requiredResources, err := request.GetRequiredResources(req)
+	if err != nil {
+		response.Fatal(rsp, errors.Wrap(err, "cannot get required resources"))
+		return rsp, nil
+	}
+
+	if len(requiredResources) > 0 {
+		f.log.Debug("processing required resources")
+		rr, err := ProtectRequiredResources(requiredResources)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrap(err, "cannot process required resources"))
+			return rsp, nil
+		}
+		maps.Copy(desiredComposed, rr)
+		protectedCount = protectedCount + len(rr)
+	}
 
 	if err := response.SetDesiredComposedResources(rsp, desiredComposed); err != nil {
 		response.Fatal(rsp, errors.Wrap(err, "cannot set desired resources"))
@@ -144,19 +170,46 @@ func ProtectResource(u *unstructured.Unstructured) bool {
 	return false
 }
 
-// GenerateUsage determines whether to return a v1 or v2 Crossplane usage.
-func GenerateUsage(u *unstructured.Unstructured, createV1Usages bool) map[string]any {
-	if createV1Usages {
-		return GenerateV1Usage(u)
+// ProtectRequiredResources creates usages for Required Resources in a Composition.
+// Usages are generated for any Watched resource. Other required resources need to have the label.
+func ProtectRequiredResources(rr map[string][]resource.Required) (map[resource.Name]*resource.DesiredComposed, error) {
+	dc := map[resource.Name]*resource.DesiredComposed{}
+	for resourceName, v := range rr {
+		for _, r := range v {
+			if resourceName == RequirementsNameWatchedResource || ProtectResource(r.Resource) {
+				var reason string
+				if resourceName == RequirementsNameWatchedResource {
+					reason = ProtectionReasonWatchOperation
+				} else {
+					reason = ProtectionReasonOperation
+				}
+				usage := GenerateV2Usage(r.Resource, reason)
+				usageComposed := composed.New()
+				if err := convertViaJSON(usageComposed, usage); err != nil {
+					return dc, errors.Wrap(err, "cannot convert usage to unstructured")
+				}
+				uname := fmt.Sprintf("%s-%s-%s-required-resource-fn-protection", r.Resource.GetKind(), r.Resource.GetName(), r.Resource.GetNamespace())
+				dc[resource.Name(uname)] = &resource.DesiredComposed{Resource: usageComposed}
+			}
+		}
 	}
-	return GenerateV2Usage(u)
+	return dc, nil
+}
+
+// GenerateUsage determines whether to return a v1 or v2 Crossplane usage.
+func GenerateUsage(u *unstructured.Unstructured, reason string, createV1Usages bool) map[string]any {
+	if createV1Usages {
+		return GenerateV1Usage(u, reason)
+	}
+	return GenerateV2Usage(u, reason)
 }
 
 // GenerateV2Usage creates a v2 Usage for a resource.
-func GenerateV2Usage(u *unstructured.Unstructured) map[string]any {
+func GenerateV2Usage(u *unstructured.Unstructured, reason string) map[string]any {
+	name := strings.ToLower(u.GetKind() + "-" + u.GetName())
 	usageType := protectionv1beta1.ClusterUsageKind
 	usageMeta := map[string]any{
-		"name": GenerateName(u.GetName(), UsageNameSuffix),
+		"name": GenerateName(name, UsageNameSuffix),
 	}
 
 	namespace := u.GetNamespace()
@@ -177,7 +230,7 @@ func GenerateV2Usage(u *unstructured.Unstructured) map[string]any {
 					"name": u.GetName(),
 				},
 			},
-			"reason": ProtectionReason,
+			"reason": reason,
 		},
 	}
 	return usage
@@ -185,12 +238,13 @@ func GenerateV2Usage(u *unstructured.Unstructured) map[string]any {
 
 // GenerateV1Usage creates a Crossplane v1 Usage for a resource.
 // Only Cluster Scoped Resources are supported.
-func GenerateV1Usage(u *unstructured.Unstructured) map[string]any {
+func GenerateV1Usage(u *unstructured.Unstructured, reason string) map[string]any {
+	name := strings.ToLower(u.GetKind() + "-" + u.GetName())
 	usage := map[string]any{
 		"apiVersion": ProtectionV1GroupVersion,
 		"kind":       apiextensionsv1beta1.UsageKind,
 		"metadata": map[string]any{
-			"name": GenerateName(u.GetName(), UsageNameSuffix),
+			"name": GenerateName(name, UsageNameSuffix),
 		},
 		"spec": map[string]any{
 			"of": map[string]any{
@@ -200,7 +254,7 @@ func GenerateV1Usage(u *unstructured.Unstructured) map[string]any {
 					"name": u.GetName(),
 				},
 			},
-			"reason": ProtectionReason,
+			"reason": reason,
 		},
 	}
 	return usage
