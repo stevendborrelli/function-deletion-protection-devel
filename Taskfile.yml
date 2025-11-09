@@ -6,9 +6,8 @@ vars:
   FN_NAME: function-deletion-protection
   # v0.2.0 will move to crossplane-contrib
   # XPKG_REPO: xpkg.upbound.io/crossplane-contrib/{{.FN_NAME}}
-  # VERSION: 0.1.3
   XPKG_REPO: index.docker.io/steve/{{.FN_NAME}}
-  VERSION: 0.2.0-rc.1
+  VERSION: 0.2.0
 
 tasks:
   clean:
