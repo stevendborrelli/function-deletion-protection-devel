@@ -1,3 +1,6 @@
+**Archived** This repo has moved to crosssplane-contrib: <https://github.com/crossplane-contrib/function-deletion-protection>
+
+
 # function-deletion-protection
 
 **Note** this function is in development. Please test in your environment before
